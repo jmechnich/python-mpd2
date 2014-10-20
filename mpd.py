@@ -132,6 +132,11 @@ class MPDClient(object):
             "sticker delete":     self._fetch_nothing,
             "sticker list":       self._fetch_list,
             "sticker find":       self._fetch_songs,
+            # Mount commands
+            "mount":              self._fetch_nothing,
+            "unmount":            self._fetch_nothing,
+            "listmounts":         self._fetch_object,
+            "listneighbors":      self._fetch_object,
             # Connection Commands
             "close":              None,
             "kill":               None,
