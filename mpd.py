@@ -55,6 +55,7 @@ class _NotConnected(object):
 class MPDClient(object):
     def __init__(self):
         self.iterate = False
+        self.timeout = None
         self._reset()
         self._commands = {
             # Status Commands
@@ -219,17 +220,17 @@ class MPDClient(object):
             return retval
 
     def _write_line(self, line):
-        self._wfile.write("%s\n" % line)
+        self._wfile.write("%s\n" % line.encode('utf-8'))
         self._wfile.flush()
 
     def _write_command(self, command, args=[]):
         parts = [command]
         for arg in args:
-            parts.append('"%s"' % escape(str(arg)))
+            parts.append('"%s"' % escape(unicode(arg)))
         self._write_line(" ".join(parts))
 
     def _read_line(self):
-        line = self._rfile.readline()
+        line = self._rfile.readline().decode('utf-8')
         if not line.endswith("\n"):
             raise ConnectionError("Connection lost while reading line")
         line = line.rstrip("\n")
@@ -361,7 +362,7 @@ class MPDClient(object):
         return self._wrap_iterator(self._read_command_list())
 
     def _hello(self):
-        line = self._rfile.readline()
+        line = self._rfile.readline().decode('utf-8')
         if not line.endswith("\n"):
             raise ConnectionError("Connection lost while reading MPD hello")
         line = line.rstrip("\n")
@@ -383,6 +384,8 @@ class MPDClient(object):
             raise ConnectionError("Unix domain sockets not supported "
                                   "on this platform")
         sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        if self.timeout:
+            sock.settimeout(self.timeout)
         sock.connect(path)
         return sock
 
@@ -399,6 +402,8 @@ class MPDClient(object):
             sock = None
             try:
                 sock = socket.socket(af, socktype, proto)
+                if self.timeout:
+                    sock.settimeout(self.timeout)
                 sock.connect(sa)
                 return sock
             except socket.error, err:
